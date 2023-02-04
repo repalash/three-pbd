@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@latest/build/three.module.js",
+          "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+
+    </script>
+
+</head>
+<body>
+
+<script type="module">
+
+    import * as THREE from 'three';
+    import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+    import {
+        ParticleBody3d,
+        Solver3d,
+        PlanarCollision3d,
+        GravitationalForce3d,
+        BodyDistanceConstraint3d,
+        StaticConstraint3d
+    } from "./../dist/index.esm.js";
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const solver = new Solver3d();
+    solver.addForce(new GravitationalForce3d())
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshBasicMaterial({color: 0x00ff00})
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -3;
+    camera.position.z = 5;
+    scene.add(ground);
+    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), -ground.position.y))
+
+    const bodies = []
+    for (let i = 0; i < 20; i++) {
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.1, 32, 32),
+            new THREE.MeshBasicMaterial({color: 0xff0000})
+        );
+        const body = new ParticleBody3d(sphere.position, 0.1, i*i*0.2 + 0.1)
+        body.setPosition(new THREE.Vector3(i-10, 0, 0).multiplyScalar(0.2));
+        body.setVelocity(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(4));
+        scene.add(sphere);
+        solver.addBody(body);
+        bodies.push(body);
+
+        if (i > 0) solver.addConstraint(new BodyDistanceConstraint3d(body, bodies[i - 1], 1))
+        if(i<1||i>18)solver.addConstraint(new StaticConstraint3d(body))
+    }
+
+    const orbit = new OrbitControls(camera, renderer.domElement);
+
+    const animate = function () {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        solver.stepPhysics(0.01);
+    };
+    animate();
+
+</script>
+</body>
+</html>
