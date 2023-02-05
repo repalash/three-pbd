@@ -2,7 +2,7 @@ import {Box3, Vector3} from "three";
 import {Constraint3d} from "../constraints/Constraint3d";
 import {StaticConstraint3d} from "../constraints/StaticConstraint3d";
 
-export abstract class BaseBody3d {
+export abstract class BaseBody3d extends EventTarget{
     public damping: number = 1;
     public particleRadius: number;
     public particleMass: number;
@@ -17,6 +17,7 @@ export abstract class BaseBody3d {
     abstract predictedCenterOfMass: Vector3;
 
     constructor(radius: number, mass: number) {
+        super();
         this.particleRadius = radius;
         this.particleMass = mass;
 
@@ -83,25 +84,34 @@ export abstract class BaseBody3d {
         for (const item of this.predicted) item.addScaledVector(vec, scale);
     }
 
+    onPositionUpdated(delta: number, indexes?: number[]){
+        if(Math.abs(delta) <= 0.000001) return 0;
+        this.updateBounds();
+        this.dispatchEvent(new CustomEvent('positionUpdated', {detail: {delta, indexes}}));
+        return delta
+    }
+
     addToPosition(vec: Vector3, scale = 1){
         for (const item of this.positions) item.addScaledVector(vec, scale);
         for (const item of this.predicted) item.addScaledVector(vec, scale);
-        this.updateBounds()
+        this.onPositionUpdated(vec.lengthSq() * scale);
     }
 
     setPosition(vec: Vector3, i = 0){
         this.positions[i].copy(vec);
         this.predicted[i].copy(vec);
-        this.updateBounds()
+        this.onPositionUpdated(vec.lengthSq() / this.numParticles, [i]);
         return vec;
     }
 
     setPositions(vec: Vector3[]){
+        let d = 0;
         for (let i = 0; i < vec.length; i++){
+            d += this.positions[i].sub(vec[i]).lengthSq();
             this.positions[i].copy(vec[i]);
             this.predicted[i].copy(vec[i]);
         }
-        this.updateBounds()
+        this.onPositionUpdated(d / vec.length, vec.map((_, i) => i));
         return vec;
     }
 
@@ -115,6 +125,32 @@ export abstract class BaseBody3d {
             this.velocities[i].copy(vec[i]);
         }
         return vec;
+    }
+
+    updatePosition(i = 0){
+        let d = this.positions[i].sub(this.predicted[i]).lengthSq();
+        this.positions[i].copy(this.predicted[i]);
+        this.onPositionUpdated(d / this.numParticles, [i]);
+        return d
+    }
+
+    updatePositions(){
+        let d = 0;
+        const ind = [];
+        for (let i = 0; i < this.numParticles; i++) {
+            let d1 = this.positions[i].sub(this.predicted[i]).lengthSq();
+            if(d1 > 0) {
+                this.positions[i].copy(this.predicted[i]);
+                ind.push(i);
+                d+=d1;
+            }
+        }
+        this.onPositionUpdated(d / ind.length, ind.length === this.numParticles ? undefined : ind);
+        return d
+    }
+
+    dispose(){
+        this.constraints = [];
     }
 
 }

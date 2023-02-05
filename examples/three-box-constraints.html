@@ -54,7 +54,7 @@
     ground.position.y = -3;
     camera.position.z = 5;
     scene.add(ground);
-    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), -ground.position.y))
+    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), ground.position.y))
 
     const particles = []
     // corners of a cube
@@ -74,7 +74,7 @@
         particles.push(sphere.position)
     }
 
-    const body = new Body3d(particles, 0.2, 2);
+    const body = new Body3d(particles, 0.1, 1);
 
     // connect the corners of the cube with distance constraints
     for (let i = 0; i < 8; i++) {

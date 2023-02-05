@@ -54,7 +54,7 @@
     ground.position.y = -3;
     camera.position.z = 5;
     scene.add(ground);
-    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), -ground.position.y))
+    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), ground.position.y))
 
     const particles = []
     // corners of a cube
@@ -68,12 +68,13 @@
         sphere.position.y = ((i >> 1) % 2) * 2 - 1;
         sphere.position.z = ((i >> 2) % 2) * 2 - 1;
         sphere.position.multiplyScalar(0.4)
+        sphere.position.applyAxisAngle(new THREE.Vector3(1, 0, 0), Math.PI / 3)
 
         scene.add(sphere);
         particles.push(sphere.position)
     }
 
-    const body = new RigidBody3d(particles, 0.2, 2);
+    const body = new RigidBody3d(particles, 0.1, 1);
     solver.addBody(body);
 
     const orbit = new OrbitControls(camera, renderer.domElement);

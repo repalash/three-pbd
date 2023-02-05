@@ -10,12 +10,11 @@ export class BodyPlaneContact3d extends CollisionContact3d {
         super();
     }
     public resolveContact(di: number): void {
-        const d = this.normal.dot(this.body.predicted[this.i0]) + this.distance - this.body.particleRadius;
+        const d = this.normal.dot(this.body.predicted[this.i0]) - this.distance - this.body.particleRadius;
 
         if (d < 0.0) {
-            const delta = this.normal.clone().multiplyScalar(-d * di);
-            this.body.positions[this.i0].add(delta);
-            this.body.predicted[this.i0].add(delta);
+            this.body.predicted[this.i0].addScaledVector(this.normal, -d * di);
+            this.body.positions[this.i0].addScaledVector(this.normal, -d * di);
         }
     }
 }

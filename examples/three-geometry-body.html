@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+    </style>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@latest/build/three.module.js",
+            "three/examples/jsm/controls/OrbitControls.js": "https://unpkg.com/three/examples/jsm/controls/OrbitControls.js"
+        }
+      }
+    </script>
+
+</head>
+<body>
+
+<script type="module">
+
+    import * as THREE from 'three';
+    import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
+    import {ParticleBody3d, Solver3d, PlanarCollision3d, GravitationalForce3d, RigidGeometryBody3d} from "../dist/index.esm.js";
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+    const renderer = new THREE.WebGLRenderer();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    const solver = new Solver3d();
+    solver.addForce(new GravitationalForce3d())
+    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), -1))
+    const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(10, 10),
+        new THREE.MeshBasicMaterial({color: 0x00ff00})
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -1;
+    camera.position.z = 5;
+    scene.add(ground);
+
+    const sphere = new THREE.Mesh(
+        new THREE.SphereGeometry(0.6, 8, 8).translate(0, 4, 0),
+        new THREE.MeshBasicMaterial({color: 0xff0000})
+    );
+    sphere.frustumCulled = false;
+    const body = new RigidGeometryBody3d(sphere.geometry, 0.1, 2, 0.5);
+    scene.add(sphere);
+    solver.addBody(body);
+
+    const box = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1).translate(0, 3, 0).rotateX(Math.PI / 3).rotateY(Math.PI / 3),
+        new THREE.MeshBasicMaterial({color: 0x0000ff})
+    );
+    box.frustumCulled = false;
+    const body2 = new RigidGeometryBody3d(box.geometry, 0.1, 2, 0.4);
+    scene.add(box);
+    solver.addBody(body2);
+
+    const orbit = new OrbitControls(camera, renderer.domElement);
+
+    const animate = function () {
+        requestAnimationFrame( animate );
+        renderer.render( scene, camera );
+        solver.stepPhysics(0.01);
+    };
+    animate();
+
+</script>
+</body>
+</html>

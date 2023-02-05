@@ -45,18 +45,15 @@ export class Solver3d {
 
         this.resolveCollisions();
 
-        this.constrainVelocities();
-
         this.constrainPositions();
 
         this.updateVelocities(dt);
 
-        const delta = this.updatePositions();
+        this.constrainVelocities();
 
-        this.updateBounds();
-
-        return delta;
-
+        return this.updatePositions();
+        // this is done in updatePositions
+        // this.updateBounds();
     }
 
     private applyExternalForces(dt: number) {
@@ -133,10 +130,7 @@ export class Solver3d {
     private updatePositions() {
         let delta = 0.0;
         for (const body of this.bodies) {
-            for (let i = 0; i < body.numParticles; i++) {
-                delta += body.positions[i].sub(body.predicted[i]).lengthSq();
-                body.positions[i].copy(body.predicted[i]);
-            }
+            delta += body.updatePositions();
         }
         return delta;
     }

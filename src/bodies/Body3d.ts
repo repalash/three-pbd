@@ -55,4 +55,13 @@ export class Body3d extends BaseBody3d{
         return this.predicted.reduce((a, b) => a.add(b), new Vector3()).divideScalar(this.numParticles);
     }
 
+    dispose() {
+        super.dispose();
+        this.positions = [];
+        this.predicted = [];
+        this.velocities = [];
+        this._centerOfMass.set(0, 0, 0);
+        this.updateBounds();
+    }
+
 }

@@ -75,4 +75,23 @@ export class ParticleBody3d extends BaseBody3d {
         this.updateBounds();
     }
 
+    updatePosition(i=0){
+        if(i>0) throw new Error("ParticleBody3d only has one particle");
+        let d = this.position.sub(this.predict).lengthSq();
+        this.position.copy(this.predict);
+        this.updateBounds();
+        return d
+    }
+
+    updatePositions(){
+        return this.updatePosition()
+    }
+
+    dispose() {
+        super.dispose();
+        this.position.set(0, 0, 0);
+        this.predict.set(0, 0, 0);
+        this.velocity.set(0, 0, 0);
+    }
+
 }

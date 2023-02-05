@@ -3,6 +3,7 @@ import {Vector3} from "three";
 import {CollisionContact3d} from "./CollisionContact3d";
 import {BodyPlaneContact3d} from "./BodyPlaneContact3d";
 import {BaseBody3d} from "../bodies/BaseBody3d";
+
 export class PlanarCollision3d extends Collision3d {
     private readonly normal: Vector3;
     private readonly distance: number;
@@ -19,7 +20,7 @@ export class PlanarCollision3d extends Collision3d {
             const radius = body.particleRadius;
 
             for (let i = 0; i < numParticles; i++) {
-                const d = this.normal.dot(body.predicted[i]) + this.distance - radius;
+                const d = this.normal.dot(body.predicted[i]) - this.distance - radius;
 
                 if (d < 0.0) {
                     contacts.push(new BodyPlaneContact3d(body, i, this.normal, this.distance));
