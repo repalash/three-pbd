@@ -41,7 +41,7 @@
 
     const solver = new Solver3d();
     solver.addForce(new GravitationalForce3d())
-    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), 1))
+    solver.addCollision(new PlanarCollision3d(new THREE.Vector3(0, 1, 0), -1))
     const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(10, 10),
         new THREE.MeshBasicMaterial({color: 0x00ff00})
