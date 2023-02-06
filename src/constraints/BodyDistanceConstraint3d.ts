@@ -1,42 +1,45 @@
-import {BodyConstraint3d} from "./Constraint3d";
 import {BaseBody3d} from "../bodies/BaseBody3d";
-import {Vector3} from "three";
+import {BaseDistanceConstraint3d} from "./BaseDistanceConstraint3d";
+import {LineGeometry} from "three/examples/jsm/lines/LineGeometry";
+import {LineMaterial} from "three/examples/jsm/lines/LineMaterial";
+import {Line2} from "three/examples/jsm/lines/Line2";
 
-export class BodyDistanceConstraint3d extends BodyConstraint3d {
-    private restLength: number;
-    private compressionStiffness: number;
-    private stretchStiffness: number;
-
-    constructor(body0: BaseBody3d, body1: BaseBody3d, stiffness: number) {
-        super(body0, body1);
-        this.compressionStiffness = stiffness;
-        this.stretchStiffness = stiffness;
+export class BodyDistanceConstraint3d extends BaseDistanceConstraint3d {
+    constructor(public readonly body0: BaseBody3d, public readonly body1: BaseBody3d, stiffness: number) {
+        super(stiffness, stiffness);
         this.restLength = body0.predictedCenterOfMass.distanceTo(body1.predictedCenterOfMass);
     }
 
     public constrainPositions(di: number): void {
-        let mass0 = this.body0.totalMass;
-        let mass1 = this.body1.totalMass;
-        let invMass0 = 1.0 / mass0;
-        let invMass1 = 1.0 / mass1;
-        let sum = mass0 + mass1;
-
+        const mass0 = this.body0.totalMass;
+        const mass1 = this.body1.totalMass;
         const c0 = this.body0.predictedCenterOfMass;
         const c1 = this.body1.predictedCenterOfMass;
 
-        let n = new Vector3().subVectors(c1, c0);
-        let d = n.length();
-        n.normalize();
+        let corr = this.getCorrection(c0, c1).multiplyScalar(di * (mass0 + mass1));
 
-        let corr = n.clone().multiplyScalar((d - this.restLength) * sum);
-        if (d < this.restLength)
-            corr.multiplyScalar(this.compressionStiffness);
-        else
-            corr.multiplyScalar(this.stretchStiffness);
+        this.body0.addToPredicted(corr, 1.0 / mass0);
+        this.body1.addToPredicted(corr, -1.0 / mass1);
+    }
 
-        corr.multiplyScalar(di);
+    makeObject(){
+        const geom = new LineGeometry();
+        const c0 = this.body0.predictedCenterOfMass;
+        const c1 = this.body1.predictedCenterOfMass;
+        geom.setPositions([c0.x, c0.y, c0.z, c1.x, c1.y, c1.z])
+        geom.setColors([1, 0, 0, 0, 1, 0]);
 
-        this.body0.addToPredicted(corr, invMass0);
-        this.body1.addToPredicted(corr, -invMass1);
+        const mat = new LineMaterial( {
+            color: 0xffffff,
+            linewidth: 2, // in world units with size attenuation, pixels otherwise
+            vertexColors: true,
+            //resolution:  // to be set by renderer, eventually
+            dashed: false,
+            alphaToCoverage: true,
+        } );
+        const line = new Line2(geom, mat);
+        line.computeLineDistances();
+
+        return line;
     }
 }

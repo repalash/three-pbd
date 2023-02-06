@@ -5,9 +5,9 @@ import {Constraint3d} from "../constraints/Constraint3d";
 import {BaseBody3d} from "../bodies/BaseBody3d";
 
 export class Solver3d {
-    solverIterations: number = 5;
-    collisionIterations: number = 10;
-    sleepThreshold: number = 0.0001;
+    solverIterations: number = 3;
+    collisionIterations: number = 3;
+    sleepThreshold: number = 1e-3;
     bodies: BaseBody3d[] = [];
     forces: ExternalForce3d[] = [];
     collisions: Collision3d[] = [];

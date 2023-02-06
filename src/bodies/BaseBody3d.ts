@@ -30,11 +30,13 @@ export abstract class BaseBody3d extends EventTarget{
     }
 
     public constrainPositions(di: number) {
-        for (const item of this.constraints) item.constrainPositions(di);
+        for (const item of this.constraints.filter(c=>c.isStatic)) item.constrainPositions(di);
+        for (const item of this.constraints.filter(c=>!c.isStatic)) item.constrainPositions(di);
     }
 
     public constrainVelocities() {
-        for (const item of this.constraints) item.constrainVelocities();
+        for (const item of this.constraints.filter(c=>c.isStatic)) item.constrainVelocities();
+        for (const item of this.constraints.filter(c=>!c.isStatic)) item.constrainVelocities();
     }
 
     public randomizeConstraintOrder(rnd = Math.random) {

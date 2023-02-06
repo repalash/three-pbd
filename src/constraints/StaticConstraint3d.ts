@@ -4,12 +4,14 @@ import {BaseBody3d} from "../bodies/BaseBody3d";
 
 export class StaticConstraint3d extends Constraint3d {
     private readonly i0: number;
-    private position: Vector3;
+    private readonly position: Vector3;
 
-    constructor(body: BaseBody3d, i: number = 0) {
-        super(body);
+    readonly isStatic = true;
+
+    constructor(public readonly body0: BaseBody3d, i: number = 0) {
+        super();
         this.i0 = i;
-        this.position = body.positions[i].clone();
+        this.position = body0.positions[i].clone();
     }
 
     public constrainPositions(_: number): void {

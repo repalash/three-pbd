@@ -10,7 +10,7 @@ function getVertices(geometry: BufferGeometry): Vector3[]{
     return vertices;
 }
 export class GeometryBody3d extends Body3d{
-    constructor(geometry: BufferGeometry, radius: number, mass: number){
+    constructor(public readonly geometry: BufferGeometry, radius: number, mass: number){
         super(getVertices(geometry), radius, mass);
         this.addEventListener('positionUpdated', (evt) => {
             const indexes = (evt as any).detail.indexes ?? this.positions.map((_, i) => i);

@@ -10,15 +10,15 @@ export class ShapeMatchingConstraint3d extends Constraint3d {
 
     private restPositions: Vector3[] = [];
 
-    constructor(body: BaseBody3d, private stiffness: number = 0) {
-        super(body);
+    constructor(public readonly body0: BaseBody3d, private stiffness: number = 0) {
+        super();
 
         let A = this.invRestMatrix;
-        const mass = body.particleMass;
+        const mass = body0.particleMass;
 
-        for (let pos of body.positions) {
+        for (let pos of body0.positions) {
 
-            let q = pos.clone().sub(body.centerOfMass);
+            let q = pos.clone().sub(body0.centerOfMass);
 
             A.elements[0] += mass * q.x * q.x;
             A.elements[3] += mass * q.x * q.y;
