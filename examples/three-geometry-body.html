@@ -74,7 +74,7 @@
     const animate = function () {
         requestAnimationFrame( animate );
         renderer.render( scene, camera );
-        solver.stepPhysics(0.01);
+        solver.update(0.01);
     };
     animate();
 

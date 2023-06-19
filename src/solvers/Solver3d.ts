@@ -7,6 +7,7 @@ import {BaseBody3d} from "../bodies/BaseBody3d";
 export class Solver3d {
     solverIterations: number = 3;
     collisionIterations: number = 3;
+    updateSubSteps: number = 5;
     sleepThreshold: number = 1e-3;
     bodies: BaseBody3d[] = [];
     forces: ExternalForce3d[] = [];
@@ -34,8 +35,23 @@ export class Solver3d {
         this.bodies.push(body);
     }
 
-    stepPhysics(dt: number) {
-        if (dt === 0.0) return;
+
+    private _startEvent = new CustomEvent("solveStart");
+    private _endEvent = new CustomEvent("solveEnd");
+
+    update(dt: number){
+        this.bodies.forEach(body => body.dispatchEvent(this._startEvent));
+        const subStepDt = dt / this.updateSubSteps;
+        let d = 0;
+        for (let i = 0; i < this.updateSubSteps; i++) {
+            d += this.stepPhysics(subStepDt);
+        }
+        this.bodies.forEach(body => body.dispatchEvent(this._endEvent));
+        return d;
+    }
+
+    private stepPhysics(dt: number) {
+        if (dt === 0.0) return 0;
 
         this.applyExternalForces(dt);
 
@@ -111,15 +127,19 @@ export class Solver3d {
         let invDt = 1.0 / dt;
         let threshold2 = this.sleepThreshold * dt;
         threshold2 *= threshold2;
-
+        let delta = 0.0;
         for (const body of this.bodies) {
             for (let i = 0; i < body.numParticles; i++) {
                 body.velocities[i].subVectors(body.predicted[i], body.positions[i]).multiplyScalar(invDt);
-                if(body.velocities[i].lengthSq() < threshold2) {
+                const l = body.velocities[i].lengthSq();
+                if(l < threshold2) {
                     body.velocities[i].set(0,0,0);
+                }else{
+                    delta += l;
                 }
             }
         }
+        return delta;
     }
 
     private constrainVelocities() {

@@ -27,6 +27,10 @@ export abstract class BaseBody3d extends EventTarget{
         if (this.particleRadius <= 0) {
             throw new Error("Particles radius <= 0");
         }
+
+        this.addEventListener('solveStart', (_) => {
+            this._updatedIndexes.clear();
+        });
     }
 
     public constrainPositions(di: number) {
@@ -57,16 +61,20 @@ export abstract class BaseBody3d extends EventTarget{
                 this.constraints.push(new StaticConstraint3d(this, i));
     }
 
+
+    private _tVec1 = new Vector3();
+    private _tVec2 = new Vector3();
+
     public updateBounds(): Box3 {
-        let min = new Vector3(Infinity, Infinity, Infinity);
-        let max = new Vector3(-Infinity, -Infinity, -Infinity);
+        let min = this._tVec1.set(Infinity, Infinity, Infinity);
+        let max = this._tVec2.set(-Infinity, -Infinity, -Infinity);
         for (const item of this.positions) {
             min.min(item);
             max.max(item);
         }
         min.subScalar(this.particleRadius);
         max.addScalar(this.particleRadius);
-        this.bounds = new Box3(min, max);
+        this.bounds.set(min, max);
         return this.bounds;
     }
 
@@ -86,10 +94,10 @@ export abstract class BaseBody3d extends EventTarget{
         for (const item of this.predicted) item.addScaledVector(vec, scale);
     }
 
-    onPositionUpdated(delta: number, indexes?: number[]){
+    onPositionUpdated(delta: number){
         if(Math.abs(delta) <= 0.000001) return 0;
         this.updateBounds();
-        this.dispatchEvent(new CustomEvent('positionUpdated', {detail: {delta, indexes}}));
+        this.dispatchEvent(new CustomEvent('positionUpdated', {detail: {delta}}));
         return delta
     }
 
@@ -102,7 +110,8 @@ export abstract class BaseBody3d extends EventTarget{
     setPosition(vec: Vector3, i = 0){
         this.positions[i].copy(vec);
         this.predicted[i].copy(vec);
-        this.onPositionUpdated(vec.lengthSq() / this.numParticles, [i]);
+        this._pointUpdated(i);
+        this.onPositionUpdated(vec.lengthSq() / this.numParticles);
         return vec;
     }
 
@@ -112,8 +121,9 @@ export abstract class BaseBody3d extends EventTarget{
             d += this.positions[i].sub(vec[i]).lengthSq();
             this.positions[i].copy(vec[i]);
             this.predicted[i].copy(vec[i]);
+            this._pointUpdated(i);
         }
-        this.onPositionUpdated(d / vec.length, vec.map((_, i) => i));
+        this.onPositionUpdated(d / vec.length);
         return vec;
     }
 
@@ -132,8 +142,15 @@ export abstract class BaseBody3d extends EventTarget{
     updatePosition(i = 0){
         let d = this.positions[i].sub(this.predicted[i]).lengthSq();
         this.positions[i].copy(this.predicted[i]);
-        this.onPositionUpdated(d / this.numParticles, [i]);
+        this._pointUpdated(i);
+        this.onPositionUpdated(d / this.numParticles);
         return d
+    }
+
+    protected _updatedIndexes = new Set<number>();
+
+    private _pointUpdated(i: number){
+        this._updatedIndexes.add(i);
     }
 
     updatePositions(){
@@ -143,11 +160,11 @@ export abstract class BaseBody3d extends EventTarget{
             let d1 = this.positions[i].sub(this.predicted[i]).lengthSq();
             if(d1 > 0) {
                 this.positions[i].copy(this.predicted[i]);
-                ind.push(i);
+                this._pointUpdated(i);
                 d+=d1;
             }
         }
-        this.onPositionUpdated(d / ind.length, ind.length === this.numParticles ? undefined : ind);
+        this.onPositionUpdated(d / ind.length);
         return d
     }
 

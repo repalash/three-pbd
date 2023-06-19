@@ -63,7 +63,7 @@
             new THREE.SphereGeometry(0.1, 32, 32),
             new THREE.MeshBasicMaterial({color: 0xff0000})
         );
-        const body = new ParticleBody3d(sphere.position, 0.1, i*i*0.2 + 0.1)
+        const body = new ParticleBody3d(sphere.position, 0.1, i*0.1 + 1)
         body.setPosition(new THREE.Vector3(i-10, 0, 0).multiplyScalar(0.2));
         body.setVelocity(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(4));
         scene.add(sphere);
@@ -71,15 +71,18 @@
         bodies.push(body);
 
         if (i > 0) solver.addConstraint(new BodyDistanceConstraint3d(body, bodies[i - 1], 1))
-        if(i<1||i>18)solver.addConstraint(new StaticConstraint3d(body))
     }
+    bodies[0].setPosition(bodies[0].position.clone().add(new THREE.Vector3(1, 0, 0)))
+    bodies[19].setPosition(bodies[19].position.clone().add(new THREE.Vector3(-1, 0, 0)))
+    solver.addConstraint(new StaticConstraint3d(bodies[0]))
+    solver.addConstraint(new StaticConstraint3d(bodies[19]))
 
     const orbit = new OrbitControls(camera, renderer.domElement);
 
     const animate = function () {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
-        solver.stepPhysics(0.01);
+        solver.update(0.01);
     };
     animate();
 

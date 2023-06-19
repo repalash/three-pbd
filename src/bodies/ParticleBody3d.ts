@@ -29,13 +29,6 @@ export class ParticleBody3d extends BaseBody3d {
             this.constraints.push(new StaticConstraint3d(this, 0));
     }
 
-    public updateBounds() {
-        let min = this.position.clone().subScalar(this.particleRadius);
-        let max = this.position.clone().addScalar(this.particleRadius);
-        this.bounds = new Box3(min, max);
-        return this.bounds;
-    }
-
     get numParticles(): number {
         return 1;
     }
@@ -68,19 +61,6 @@ export class ParticleBody3d extends BaseBody3d {
 
     addToPredicted(vec: Vector3, scale: number = 1) {
         this.predict.addScaledVector(vec, scale);
-    }
-
-    addToPosition(vec: Vector3, scale: number = 1) {
-        this.position.addScaledVector(vec, scale);
-        this.updateBounds();
-    }
-
-    updatePosition(i=0){
-        if(i>0) throw new Error("ParticleBody3d only has one particle");
-        let d = this.position.sub(this.predict).lengthSq();
-        this.position.copy(this.predict);
-        this.updateBounds();
-        return d
     }
 
     updatePositions(){

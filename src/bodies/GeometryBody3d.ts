@@ -12,12 +12,20 @@ function getVertices(geometry: BufferGeometry): Vector3[]{
 export class GeometryBody3d extends Body3d{
     constructor(public readonly geometry: BufferGeometry, radius: number, mass: number){
         super(getVertices(geometry), radius, mass);
-        this.addEventListener('positionUpdated', (evt) => {
-            const indexes = (evt as any).detail.indexes ?? this.positions.map((_, i) => i);
+        this.addEventListener('solveEnd', (_) => {
+            const indexes = this._updatedIndexes;
             const arr = (geometry.attributes.position as BufferAttribute);
-            for (const index of indexes) {
-                const pos = this.positions[index];
-                arr.setXYZ(index, pos.x, pos.y, pos.z);
+            if(indexes) {
+                for (const i of indexes) {
+                    const pos = this.positions[i];
+                    arr.setXYZ(i, pos.x, pos.y, pos.z);
+                }
+            }else{
+                const l = this.positions.length;
+                for (let i = 0; i < l; i++) {
+                    const pos = this.positions[i];
+                    arr.setXYZ(i, pos.x, pos.y, pos.z);
+                }
             }
             arr.needsUpdate = true;
         });

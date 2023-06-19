@@ -14,7 +14,7 @@ export class BodyPlaneContact3d extends CollisionContact3d {
 
         if (d < 0.0) {
             this.body.predicted[this.i0].addScaledVector(this.normal, -d * di);
-            this.body.positions[this.i0].addScaledVector(this.normal, -d * di);
+            this.body.positions[this.i0].addScaledVector(this.normal, -d * di); // so that velocity is zero, force can be applied separately
         }
     }
 }
